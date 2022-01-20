@@ -13,59 +13,20 @@
 // are bridged to remove references to the `node` namespace. `node_version.h`,
 // included below, defines `NAPI_VERSION`.
 
-#include "node_version.h"
 #include "env.h"
+#include "gtest/gtest_prod.h"
 #include "node_internals.h"
+#include "node_version.h"
 
-#define NAPI_ARRAYSIZE(array) \
-  node::arraysize((array))
+#define NAPI_ARRAYSIZE(array) node::arraysize((array))
 
-#define NAPI_FIXED_ONE_BYTE_STRING(isolate, string) \
+#define NAPI_FIXED_ONE_BYTE_STRING(isolate, string)                            \
   node::FIXED_ONE_BYTE_STRING((isolate), (string))
 
-#define NAPI_PRIVATE_KEY(context, suffix) \
-  (node::Environment::GetCurrent((context))->napi_ ## suffix())
+#define NAPI_PRIVATE_KEY(context, suffix)                                      \
+  (node::Environment::GetCurrent((context))->napi_##suffix())
 
 namespace v8impl {
-
-class RefTracker {
- public:
-  RefTracker() {}
-  virtual ~RefTracker() {}
-  virtual void Finalize(bool isEnvTeardown) {}
-
-  typedef RefTracker RefList;
-
-  inline void Link(RefList* list) {
-    prev_ = list;
-    next_ = list->next_;
-    if (next_ != nullptr) {
-      next_->prev_ = this;
-    }
-    list->next_ = this;
-  }
-
-  inline void Unlink() {
-    if (prev_ != nullptr) {
-      prev_->next_ = next_;
-    }
-    if (next_ != nullptr) {
-      next_->prev_ = prev_;
-    }
-    prev_ = nullptr;
-    next_ = nullptr;
-  }
-
-  static void FinalizeAll(RefList* list) {
-    while (list->next_ != nullptr) {
-      list->next_->Finalize(true);
-    }
-  }
-
- private:
-  RefList* next_ = nullptr;
-  RefList* prev_ = nullptr;
-};
 
 template <typename T>
 using Persistent = v8::Global<T>;
